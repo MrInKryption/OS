@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <ctype.h>
 
+typedef enum { false, true } bool;
+
 typedef struct Customer {
   char id[256];
   int arrival;
@@ -60,13 +62,42 @@ Node *deQueue(Queue *queue) {
   return node;
 }
 
+void sort_by_arrival(Queue *queue) {
+  bool check = false;
+  Node *head, *curr, *next;
+  while(!check) {
+    check = true;
+    head = NULL;
+    curr = queue->front;
+    if(curr == NULL) {
+      return;
+    }
+    next = curr->next;
+    while(next != NULL) {
+      if(curr->customer->arrival > next->customer->arrival) {
+        head->next = next;
+        curr->next = next->next;
+        next->next = curr;
+        head = next;
+        next = curr->next;
+        check = false;
+      }
+      else {
+        head = curr;
+        curr = next;
+        next = next->next;
+      }
+    }
+  }
+}
+
 int main(int argC, char *argV[]) {
   FILE *input = fopen(argV[1], "r");
   char buffer[256];
   char *token;
   char delim[] = " \t\n\v\f\r";
   int count;
-  Queue *array = (Queue *)malloc(sizeof(Queue));
+  Queue *array = new_queue();
   while(fgets(buffer, sizeof(buffer), input) != NULL) {
     Customer *customer = (Customer *)malloc(sizeof(Customer));
     token = strtok(buffer, delim);
@@ -101,6 +132,7 @@ int main(int argC, char *argV[]) {
     }
     enQueue(array, new_node(customer));
   }
+  sort_by_arrival(array);
   Node *temp = array->front;
   while(temp != NULL) {
     printf("%s\n", temp->customer->id);
