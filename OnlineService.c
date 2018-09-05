@@ -6,7 +6,7 @@
 #include <ctype.h>
 
 typedef struct Customer {
-  char *id;
+  char id[256];
   int arrival;
   int priority;
   int age;
@@ -62,7 +62,7 @@ Node *deQueue(Queue *queue) {
 
 int main(int argC, char *argV[]) {
   FILE *input = fopen(argV[1], "r");
-  char buffer[255];
+  char buffer[256];
   char *token;
   char delim[] = " \t\n\v\f\r";
   int count;
@@ -74,7 +74,7 @@ int main(int argC, char *argV[]) {
     while(count < 5) {
       switch(count) {
         case 0:
-          customer->id = token;
+          strcpy(customer->id, token);
           break;
 
         case 1:
