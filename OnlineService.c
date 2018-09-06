@@ -126,11 +126,67 @@ void sort_by_priority(Queue *queue) {
   }
 }
 
+void age_process(Queue *medium, Queue *low, int active, int position) {
+  Node *temp = medium->front;
+  if(active == 1 && position == 0) {
+    temp = temp->next;
+  }
+  while(temp != NULL) {
+    if(active == 1 && position == 1 && temp->next == NULL) {
+      temp = temp->next;
+    }
+    else {
+      temp->customer->age++;
+      temp = temp->next;
+    }
+  }
+  temp = low->front;
+  if(active == 2 && position == 0) {
+    temp = temp->next;
+  }
+  while(temp != NULL) {
+    if(active == 2 && position == 1 && temp->next == NULL) {
+      temp = temp->next;
+    }
+    else {
+      temp->customer->age++;
+      temp = temp->next;
+    }
+  }
+}
+
+void check_age(Queue *medium, Queue *low) {
+  Node *temp = medium->front;
+  while(temp != NULL) {
+    if(temp->customer->age == 8) {
+      temp->customer->age = 0;
+      temp->customer->priority++;
+      if(temp->customer->priority == 5) {
+        // Do annoying stuff
+      }
+    }
+    temp = temp->next;
+  }
+  temp = low->front;
+  while(temp != NULL) {
+    if(temp->customer->age == 8) {
+      temp->customer->age = 0;
+      temp->customer->priority++;
+      if(temp->customer->priority == 3) {
+        // Do annoying stuff
+      }
+    }
+    temp = temp->next;
+  }
+}
+
 void customer_arrival(Queue *array, Queue *high, Queue *medium, Queue *low, int timer) {
+  bool high_check = false;
   while(array->front->customer->arrival == timer) {
     if(array->front->customer->priority >= 5) {
       Node *node = deQueue(array);
       enQueue(high, node);
+      high_check = true;
     }
     else if(array->front->customer->priority >= 3 && array->front->customer->priority < 5) {
       Node *node = deQueue(array);
@@ -140,6 +196,9 @@ void customer_arrival(Queue *array, Queue *high, Queue *medium, Queue *low, int 
       Node *node = deQueue(array);
       enQueue(low, node);
     }
+  }
+  if(high_check) {
+    sort_by_priority(high);
   }
 }
 
@@ -202,77 +261,190 @@ int main(int argC, char *argV[]) {
   Queue *medium = new_queue();
   Queue *low = new_queue();
   Queue *finish = new_queue();
+  Node *node;
+  Customer *customer;
   int timer = -1;
   int active = -1;
   while(array->front == NULL || high->front == NULL || medium->front == NULL || low->front == NULL) {
+    // Increment timer and check for customer arrival
     timer++;
     customer_arrival(array, high, medium, low, timer);
 
-    // To be continued...
-
+    // High priority processing
     if(high->front != NULL) {
+      // Interupt any lower priority active processes
       if(active == 1 || active == 2) {
+        // Active medium process
         if(active == 1) {
-          Node *node = deQueue(medium);
-          enQueue(medium, node);
+          // DeQueue and increment total runs
+          node = deQueue(medium);
+          node->customer->total_runs++;
+          // Check for decrease in priority condition
+          if(node->customer->total_runs == 2) {
+            node->customer->total_runs = 0;
+            node->customer->priority--;
+            // Check if it should be in lower queue or not
+            if(node->customer->priority < 3) {
+              enQueue(low, node);
+            }
+            else {
+              enQueue(medium, node);
+            }
+          }
+          // Else enQueue to the bottom of medium
+          else {
+            enQueue(medium, node);
+          }
         }
-        else if(active == 2) {
-          Node *node = deQueue(low);
+        // Active low process
+        else {
+          node = deQueue(low);
+          node->customer->total_runs++;
           enQueue(low, node);
         }
       }
-      Customer *customer = high->front->customer;
+      active = 0;
+      customer = high->front->customer;
+      customer->total_ticks++;
+      customer->run_ticks++;
+      customer->age = 0;
+      // Check to see if this is customers first process
       if(customer->ready == -1) {
         customer->ready = timer;
       }
-      customer->total_ticks++;
+      // Current process route
+      // Process completed route
       if(customer->total_ticks == customer->cpu_time) {
         customer->end = timer;
-        Node *node = deQueue(high);
+        node = deQueue(high);
         enQueue(finish, node);
         active = -1;
+        age_process(medium, low, 0, -1);
       }
       else {
-        customer->run_ticks++;
-        if(customer->run_ticks == 6) {
+        // End of run process
+        if(customer->run_ticks == 5) {
           customer->run_ticks = 0;
           customer->total_runs++;
-          if(customer->total_runs % 5 == 0) {
+          active = -1;
+          // Reduce priority check
+          if(customer->total_runs == 5) {
+            customer->total_runs = 0;
             customer->priority--;
             if(customer->priority < 5) {
-              Node *node = deQueue(high);
+              node = deQueue(high);
               enQueue(medium, node);
-              active = -1;
+              age_process(medium, low, 1, 1);
             }
             else {
-              Node *node = deQueue(high);
+              node = deQueue(high);
               enQueue(high, node);
               sort_by_priority(high);
-              active -1;
+              age_process(medium, low, 0, -1);
             }
           }
           else {
-            Node *node = deQueue(high);
+            node = deQueue(high);
             enQueue(high, node);
             sort_by_priority(high);
-            active = -1;
+            age_process(medium, low, 0, -1);
           }
+        }
+        else {
+          age_process(medium, low, 0, -1;)
         }
       }
     }
     else if(medium->front != NULL) {
-      Customer *customer = medium->front->customer;
+      if(active == 2) {
+        node = deQueue(low);
+        node->customer->total_runs++;
+        enQueue(low, node);
+      }
+      active = 1;
+      customer = medium->front->customer;
+      customer->total_ticks++;
+      customer->run_ticks++;
+      customer->age = 0;
+      // Check to see if this is customers first process
       if(customer->ready == -1) {
         customer->ready = timer;
+      }
+      // Current process route
+      // Process completed route
+      if(customer->total_ticks == customer->cpu_time) {
+        customer->end = timer;
+        node = deQueue(medium);
+        enQueue(finish, node);
+        active = -1;
+        age_process(medium, low, 1, -1);
+      }
+      else {
+        // End of run process
+        if(customer->run_ticks == 10) {
+          customer->run_ticks = 0;
+          customer->total_runs++;
+          active = -1;
+          // Reduce priority check
+          if(customer->total_runs == 2) {
+            customer->total_runs = 0;
+            customer->priority--;
+            if(customer->priority < 3) {
+              node = deQueue(medium);
+              enQueue(low, node);
+              age_process(medium, low, 2, 1);
+            }
+            else {
+              node = deQueue(medium);
+              enQueue(medium, node);
+              age_process(medium, low, 1, 1);
+            }
+          }
+          else {
+            node = deQueue(medium);
+            enQueue(medium, node);
+            age_process(medium, low, 1, 1);
+          }
+        }
+        else {
+          age_process(medium, low, 1, 0);
+        }
       }
     }
     else if(low->front != NULL) {
-      Customer *customer = low->front->customer;
+      active = 2;
+      customer = low->front->customer;
+      customer->total_ticks++;
+      customer->run_ticks++;
+      customer->age = 0;
+      // Check to see if this is customers first process
       if(customer->ready == -1) {
         customer->ready = timer;
       }
+      // Current process route
+      // Process completed route
+      if(customer->total_ticks == customer->cpu_time) {
+        customer->end = timer;
+        node = deQueue(low);
+        enQueue(finish, node);
+        active = -1;
+        age_process(medium, low, 2, -1);
+      }
+      else {
+        // End of run process
+        if(customer->run_ticks == 20) {
+          customer->run_ticks = 0;
+          customer->total_runs++;
+          active = -1;
+          node = deQueue(low);
+          enQueue(low, node);
+          age_process(medium, low, 2, 1);
+        }
+        else {
+          age_process(medium, low, 2, 0);
+        }
+      }
     }
-    return 0;
   }
   fclose(input);
   return 0;
