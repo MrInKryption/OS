@@ -126,13 +126,10 @@ void sort_by_priority(Queue *queue) {
   }
 }
 
-void age_process(Queue *medium, Queue *low, int active, int position) {
+void age_process(Queue *medium, Queue *low, int active) {
   Node *temp = medium->front;
-  if(active == 1 && position == 0) {
-    temp = temp->next;
-  }
   while(temp != NULL) {
-    if(active == 1 && position == 1 && temp->next == NULL) {
+    if(active == 1 && temp->next == NULL) {
       temp = temp->next;
     }
     else {
@@ -141,11 +138,8 @@ void age_process(Queue *medium, Queue *low, int active, int position) {
     }
   }
   temp = low->front;
-  if(active == 2 && position == 0) {
-    temp = temp->next;
-  }
   while(temp != NULL) {
-    if(active == 2 && position == 1 && temp->next == NULL) {
+    if(active == 2 && temp->next == NULL) {
       temp = temp->next;
     }
     else {
@@ -319,7 +313,7 @@ int main(int argC, char *argV[]) {
         node = deQueue(high);
         enQueue(finish, node);
         active = -1;
-        age_process(medium, low, 0, -1);
+        age_process(medium, low, 0);
       }
       else {
         // End of run process
@@ -334,24 +328,21 @@ int main(int argC, char *argV[]) {
             if(customer->priority < 5) {
               node = deQueue(high);
               enQueue(medium, node);
-              age_process(medium, low, 1, 1);
+              age_process(medium, low, 1);
             }
             else {
               node = deQueue(high);
               enQueue(high, node);
               sort_by_priority(high);
-              age_process(medium, low, 0, -1);
+              age_process(medium, low, 0);
             }
           }
           else {
             node = deQueue(high);
             enQueue(high, node);
             sort_by_priority(high);
-            age_process(medium, low, 0, -1);
+            age_process(medium, low, 0);
           }
-        }
-        else {
-          age_process(medium, low, 0, -1;)
         }
       }
     }
@@ -377,7 +368,7 @@ int main(int argC, char *argV[]) {
         node = deQueue(medium);
         enQueue(finish, node);
         active = -1;
-        age_process(medium, low, 1, -1);
+        age_process(medium, low, 0);
       }
       else {
         // End of run process
@@ -392,22 +383,19 @@ int main(int argC, char *argV[]) {
             if(customer->priority < 3) {
               node = deQueue(medium);
               enQueue(low, node);
-              age_process(medium, low, 2, 1);
+              age_process(medium, low, 2);
             }
             else {
               node = deQueue(medium);
               enQueue(medium, node);
-              age_process(medium, low, 1, 1);
+              age_process(medium, low, 1);
             }
           }
           else {
             node = deQueue(medium);
             enQueue(medium, node);
-            age_process(medium, low, 1, 1);
+            age_process(medium, low, 1);
           }
-        }
-        else {
-          age_process(medium, low, 1, 0);
         }
       }
     }
@@ -428,7 +416,7 @@ int main(int argC, char *argV[]) {
         node = deQueue(low);
         enQueue(finish, node);
         active = -1;
-        age_process(medium, low, 2, -1);
+        age_process(medium, low, 0);
       }
       else {
         // End of run process
@@ -438,10 +426,7 @@ int main(int argC, char *argV[]) {
           active = -1;
           node = deQueue(low);
           enQueue(low, node);
-          age_process(medium, low, 2, 1);
-        }
-        else {
-          age_process(medium, low, 2, 0);
+          age_process(medium, low, 2);
         }
       }
     }
