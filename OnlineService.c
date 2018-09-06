@@ -149,28 +149,66 @@ void age_process(Queue *medium, Queue *low, int active) {
   }
 }
 
-void check_age(Queue *medium, Queue *low) {
+void check_age(Queue *high, Queue *medium, Queue *low) {
   Node *temp = medium->front;
+  Node *head = NULL;
   while(temp != NULL) {
     if(temp->customer->age == 8) {
       temp->customer->age = 0;
       temp->customer->priority++;
       if(temp->customer->priority == 5) {
-        // Do annoying stuff
+        if(head == NULL) {
+          deQueue(medium);
+          enQueue(high, temp);
+          temp = medium->front;
+          head = NULL;
+        }
+        else {
+          head->next = temp->next;
+          temp->next = NULL;
+          enQueue(high, temp);
+          temp = head;
+        }
+      }
+      else {
+        head = temp;
+        temp = temp->next;
       }
     }
-    temp = temp->next;
+    else {
+      head = temp;
+      temp = temp->next;
+    }
   }
   temp = low->front;
+  head = NULL;
   while(temp != NULL) {
     if(temp->customer->age == 8) {
       temp->customer->age = 0;
       temp->customer->priority++;
       if(temp->customer->priority == 3) {
-        // Do annoying stuff
+        if(head == NULL) {
+          deQueue(low);
+          enQueue(medium, temp);
+          temp = low->front;
+          head = NULL;
+        }
+        else {
+          head->next = temp->next;
+          temp->next = NULL;
+          enQueue(medium, temp);
+          temp = head;
+        }
+      }
+      else {
+        head = temp;
+        temp = temp->next;
       }
     }
-    temp = temp->next;
+    else {
+      head = temp;
+      temp = temp->next;
+    }
   }
 }
 
@@ -199,12 +237,13 @@ void customer_arrival(Queue *array, Queue *high, Queue *medium, Queue *low, int 
 void print_queue(Queue *queue) {
   Node *temp = queue->front;
   while(temp != NULL) {
-    printf("%s\n", temp->customer->id);
+    printf("%s - %d\n", temp->customer->id, temp->customer->end);
     temp = temp->next;
   }
 }
 
 int main(int argC, char *argV[]) {
+  printf("%s\n", "START");
   FILE *input = fopen(argV[1], "r");
   char buffer[256];
   char *token;
@@ -259,10 +298,22 @@ int main(int argC, char *argV[]) {
   Customer *customer;
   int timer = -1;
   int active = -1;
-  while(array->front == NULL || high->front == NULL || medium->front == NULL || low->front == NULL) {
+  print_queue(array);
+  printf("%s\n", "PROCESSES");
+  while(array->front != NULL || high->front != NULL || medium->front != NULL || low->front != NULL) {
     // Increment timer and check for customer arrival
     timer++;
     customer_arrival(array, high, medium, low, timer);
+    printf("\n");
+    printf("%d\n", timer);
+    printf("%s\n", "HIGH");
+    print_queue(high);
+    printf("%s\n", "MEDIUM");
+    print_queue(medium);
+    printf("%s\n", "LOW");
+    print_queue(low);
+    printf("%s\n", "FINISH");
+    print_queue(finish);
 
     // High priority processing
     if(high->front != NULL) {
@@ -314,6 +365,7 @@ int main(int argC, char *argV[]) {
         enQueue(finish, node);
         active = -1;
         age_process(medium, low, 0);
+        check_age(high, medium, low);
       }
       else {
         // End of run process
@@ -329,12 +381,14 @@ int main(int argC, char *argV[]) {
               node = deQueue(high);
               enQueue(medium, node);
               age_process(medium, low, 1);
+              check_age(high, medium, low);
             }
             else {
               node = deQueue(high);
               enQueue(high, node);
               sort_by_priority(high);
               age_process(medium, low, 0);
+              check_age(high, medium, low);
             }
           }
           else {
@@ -342,6 +396,7 @@ int main(int argC, char *argV[]) {
             enQueue(high, node);
             sort_by_priority(high);
             age_process(medium, low, 0);
+            check_age(high, medium, low);
           }
         }
       }
@@ -369,6 +424,7 @@ int main(int argC, char *argV[]) {
         enQueue(finish, node);
         active = -1;
         age_process(medium, low, 0);
+        check_age(high, medium, low);
       }
       else {
         // End of run process
@@ -384,17 +440,20 @@ int main(int argC, char *argV[]) {
               node = deQueue(medium);
               enQueue(low, node);
               age_process(medium, low, 2);
+              check_age(high, medium, low);
             }
             else {
               node = deQueue(medium);
               enQueue(medium, node);
               age_process(medium, low, 1);
+              check_age(high, medium, low);
             }
           }
           else {
             node = deQueue(medium);
             enQueue(medium, node);
             age_process(medium, low, 1);
+            check_age(high, medium, low);
           }
         }
       }
@@ -417,6 +476,7 @@ int main(int argC, char *argV[]) {
         enQueue(finish, node);
         active = -1;
         age_process(medium, low, 0);
+        check_age(high, medium, low);
       }
       else {
         // End of run process
@@ -427,10 +487,12 @@ int main(int argC, char *argV[]) {
           node = deQueue(low);
           enQueue(low, node);
           age_process(medium, low, 2);
+          check_age(high, medium, low);
         }
       }
     }
   }
+  print_queue(finish);
   fclose(input);
   return 0;
 }
