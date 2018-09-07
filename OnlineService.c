@@ -99,7 +99,9 @@ void sort_by_arrival(Queue *queue) {
         else if(curr->next == queue->rear) {
           queue->rear = curr;
         }
-        head->next = next;
+        if(head != NULL) {
+          head->next = next;
+        }
         curr->next = next->next;
         next->next = curr;
         head = next;
@@ -135,7 +137,9 @@ void sort_by_priority(Queue *queue) {
         else if(curr->next == queue->rear) {
           queue->rear = curr;
         }
-        head->next = next;
+        if(head != NULL) {
+          head->next = next;
+        }
         curr->next = next->next;
         next->next = curr;
         head = next;
@@ -307,6 +311,7 @@ void customer_arrival(Queue *array, Queue *high, Queue *medium, Queue *low, int 
 // Outputs the final results of the finish Queue
 void output(Queue *finish) {
   Node *node = finish->front;
+  printf("Index Priority Arrival End Ready CPU_Time Waiting\n");
   while(node != NULL) {
     printf("%s %d %d %d %d %d %d\n", node->customer->id, node->customer->priority, node->customer->arrival, node->customer->end, node->customer->ready, node->customer->cpu_time, (node->customer->end - node->customer->ready - node->customer->cpu_time));
     node = node->next;
