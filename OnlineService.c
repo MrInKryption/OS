@@ -118,7 +118,7 @@ void sort_by_arrival(Queue *queue) {
 }
 
 // Sorts a Queues by its Customers priority
-void sort_by_priority(Queue *queue) {
+void sort_by_priority(Queue *queue, bool del) {
   bool check = false;
   Node *head, *curr, *next;
   while(!check) {
@@ -130,7 +130,7 @@ void sort_by_priority(Queue *queue) {
     }
     next = curr->next;
     while(next != NULL) {
-      if(curr->customer->priority < next->customer->priority) {
+      if(curr->customer->priority < next->customer->priority && (head != NULL || del)) {
         if(curr == queue->front) {
           queue->front = curr->next;
         }
@@ -257,6 +257,7 @@ void check_interrupts(Queue *medium, Queue *low, int current, int active) {
   if(current == 0) {
     if(active == 1) {
       node = deQueue(medium);
+      node->customer->run_ticks = 0;
       node->customer->total_runs++;
       if(node->customer->total_runs == 2) {
         node->customer->total_runs = 0;
@@ -274,12 +275,14 @@ void check_interrupts(Queue *medium, Queue *low, int current, int active) {
     }
     else if(active == 2) {
       node = deQueue(low);
+      node->customer->run_ticks = 0;
       enQueue(low, node);
     }
   }
   else if(current == 1) {
     if(active == 2) {
       node = deQueue(low);
+      node->customer->run_ticks = 0;
       enQueue(low, node);
     }
   }
@@ -304,7 +307,7 @@ void customer_arrival(Queue *array, Queue *high, Queue *medium, Queue *low, int 
     }
   }
   if(high_check) {
-    sort_by_priority(high);
+    sort_by_priority(high, false);
   }
 }
 
@@ -523,7 +526,7 @@ int main(int argC, char *argV[]) {
             }
             else {
               enQueue(high, node);
-              sort_by_priority(high);
+              sort_by_priority(high, true);
               age_process(medium, low, 0, timer);
               check_age(high, medium, low);
               node = find_next_customer(high, medium, low);
@@ -535,7 +538,7 @@ int main(int argC, char *argV[]) {
           }
           else {
             enQueue(high, node);
-            sort_by_priority(high);
+            sort_by_priority(high, true);
             age_process(medium, low, 0, timer);
             check_age(high, medium, low);
             node = find_next_customer(high, medium, low);
